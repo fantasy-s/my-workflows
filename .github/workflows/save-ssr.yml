@@ -17,14 +17,14 @@ jobs:
         M=$(date +%-m)  # 获取当前月份，去掉前导零
         YYYYMMDD=$(date +%Y%m%d)
         echo "Current date: $CURRENT_DATE"
-        echo "Constructed URL: https://a.nodeshare.xyz/uploads/$YYYY/$M/$YYYYMMDD.json"
-        echo "url=https://a.nodeshare.xyz/uploads/$YYYY/$M/$YYYYMMDD.json" >> $GITHUB_ENV
+        echo "Constructed URL: https://a.nodeshare.xyz/uploads/$YYYY/$M/$YYYYMMDD.yaml"
+        echo "url=https://a.nodeshare.xyz/uploads/$YYYY/$M/$YYYYMMDD.yaml" >> $GITHUB_ENV
         
     - name: Checkout repository
       uses: actions/checkout@v3
 
     - id: check_file
-      name: Check if JSON file exists
+      name: Check if YAML file exists
       run: |
         FILE_URL="${{ env.url }}"
         RESPONSE=$(curl --write-out "%{http_code}" --silent --output /dev/null "$FILE_URL")
@@ -36,13 +36,13 @@ jobs:
           echo "File does not exist."
           echo "file_exists=false" >> $GITHUB_OUTPUT
         fi
-    - name: Download JSON file
+    - name: Download YAML file
       if: steps.check_file.outputs.file_exists == 'true'
       run: |
         FILE_URL="${{ env.url }}"
-        curl -o "node_ssr.json" $FILE_URL
+        curl -o "node_ssr.yaml" $FILE_URL
         git config --global user.name "github-actions"
         git config --global user.email "actions@github.com"
-        git add "node_ssr.json"
-        git commit -m "Add JSON file from nodeshare for $(date +%Y%m%d)"
+        git add "node_ssr.yaml"
+        git commit -m "Add YAML file from nodeshare for $(date +%Y%m%d)"
         git push
