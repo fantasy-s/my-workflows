@@ -1,4 +1,4 @@
-name: Check and Save node-ssr Daily
+name: 每日更新ssr订阅
 
 on:
   schedule:
@@ -11,6 +11,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up date variables
         id: vars
@@ -20,14 +22,20 @@ jobs:
           M=$(date +%-m)
           YYYYMMDD=$(date +%Y%m%d)
           echo "Current date: $CURRENT_DATE"
-          URL="https://a.nodeshare.xyz/uploads/$YYYY/$M/$YYYYMMDD.json"
+          echo "YYYY=$YYYY" >> $GITHUB_ENV
+          echo "M=$M" >> $GITHUB_ENV
+          echo "YYYYMMDD=$YYYYMMDD" >> $GITHUB_ENV
+
+      - name: Construct URL
+        id: construct_url
+        run: |
+          URL="https://a.nodeshare.xyz/uploads/${{ env.YYYY }}/${{ env.M }}/${{ env.YYYYMMDD }}.json"
           echo "url=$URL" >> $GITHUB_ENV
 
       - name: Check if JSON file exists
         id: check_file
         run: |
-          FILE_URL="${{ env.url }}"
-          RESPONSE=$(curl --write-out "%{http_code}" --silent --output /dev/null "$FILE_URL")
+          RESPONSE=$(curl --write-out "%{http_code}" --silent --output /dev/null "${{ env.url }}")
           echo "HTTP Response: $RESPONSE"
           if [ "$RESPONSE" -eq 200 ]; then
             echo "file_exists=true" >> $GITHUB_OUTPUT
@@ -38,11 +46,18 @@ jobs:
       - name: Download and save JSON file
         if: steps.check_file.outputs.file_exists == 'true'
         run: |
-          FILE_URL="${{ env.url }}"
           FILENAME="node_ssr.json"
-          curl -o "$FILENAME" "$FILE_URL"
+          curl -o "$FILENAME" "${{ env.url }}"
+          
+      - name: Commit and push changes
+        if: steps.check_file.outputs.file_exists == 'true'
+        run: |
           git config --global user.name "github-actions"
           git config --global user.email "actions@github.com"
           git add "$FILENAME"
-          git commit -m "Add JSON file from nodeshare for $(date +%Y%m%d)" || echo "No changes to commit"
-          git push
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update JSON file from nodeshare for ${{ env.YYYYMMDD }}"
+            git push
+          fi
