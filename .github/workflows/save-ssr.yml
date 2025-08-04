@@ -17,32 +17,42 @@ jobs:
         M=$(date +%-m)  # 获取当前月份，去掉前导零
         YYYYMMDD=$(date +%Y%m%d)
         echo "Current date: $CURRENT_DATE"
-        echo "Constructed URL: https://a.nodeshare.xyz/uploads/$YYYY/$M/$YYYYMMDD.yaml"
-        echo "url=https://a.nodeshare.xyz/uploads/$YYYY/$M/$YYYYMMDD.yaml" >> $GITHUB_ENV
-        
+        echo "Constructed URL: https://a.nodeshare.xyz/uploads/$YYYY/$M/$YYYYMMDD"
+        echo "url=https://a.nodeshare.xyz/uploads/$YYYY/$M/$YYYYMMDD" >> $GITHUB_ENV
+
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - id: check_file
-      name: Check if YAML file exists
+      name: Check if file exists
       run: |
-        FILE_URL="${{ env.url }}"
-        RESPONSE=$(curl --write-out "%{http_code}" --silent --output /dev/null "$FILE_URL")
-        echo "HTTP Response: $RESPONSE"
-        if [ "$RESPONSE" -eq 200 ]; then
-          echo "File exists."
-          echo "file_exists=true" >> $GITHUB_OUTPUT
-        else
-          echo "File does not exist."
+        FILE_EXTENSIONS=("json" "yaml" "txt")
+        for ext in "${FILE_EXTENSIONS[@]}"; do
+          FILE_URL="${{ env.url }}.$ext"
+          RESPONSE=$(curl --write-out "%{http_code}" --silent --output /dev/null "$FILE_URL")
+          echo "Checking $FILE_URL - HTTP Response: $RESPONSE"
+          if [ "$RESPONSE" -eq 200 ]; then
+            echo "File exists: $FILE_URL"
+            echo "file_exists=true" >> $GITHUB_OUTPUT
+            echo "file_extension=$ext" >> $GITHUB_OUTPUT
+            break
+          fi
+        done
+        if [ ! -f "$FILE_URL" ]; then
+          echo "No file exists."
           echo "file_exists=false" >> $GITHUB_OUTPUT
         fi
-    - name: Download YAML file
+
+    - name: Download file
       if: steps.check_file.outputs.file_exists == 'true'
       run: |
-        FILE_URL="${{ env.url }}"
-        curl -o "node_ssr.yaml" $FILE_URL
+        FILE_URL="${{ env.url }}.${{ steps.check_file.outputs.file_extension }}"
+        EXT="${{ steps.check_file.outputs.file_extension }}"
+        curl -o "node_ssr_singbox.json" "$FILE_URL"
+        curl -o "node_ssr_clash.yaml" "$FILE_URL"
+        curl -o "node_ssr_v2ray.txt" "$FILE_URL"
         git config --global user.name "github-actions"
         git config --global user.email "actions@github.com"
-        git add "node_ssr.yaml"
-        git commit -m "Add YAML file from nodeshare for $(date +%Y%m%d)"
+        git add "node_ssr_singbox.json" "node_ssr_clash.yaml" "node_ssr_v2ray.txt"
+        git commit -m "Add file from nodeshare for $(date +%Y%m%d)"
         git push
