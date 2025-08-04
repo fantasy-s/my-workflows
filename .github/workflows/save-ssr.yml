@@ -26,22 +26,29 @@ jobs:
     - id: check_file
       name: Check if file exists
       run: |
+        echo "Starting file check with URL: ${{ env.url }}"
         FILE_EXTENSIONS=("json" "yaml" "txt")
+        FILE_FOUND=false
         for ext in "${FILE_EXTENSIONS[@]}"; do
           FILE_URL="${{ env.url }}.$ext"
+          echo "Checking $FILE_URL"
           RESPONSE=$(curl --write-out "%{http_code}" --silent --output /dev/null "$FILE_URL")
-          echo "Checking $FILE_URL - HTTP Response: $RESPONSE"
+          echo "HTTP Response: $RESPONSE"
           if [ "$RESPONSE" -eq 200 ]; then
             echo "File exists: $FILE_URL"
             echo "file_exists=true" >> $GITHUB_OUTPUT
             echo "file_extension=$ext" >> $GITHUB_OUTPUT
-            # break
+            FILE_FOUND=true
+            break  # 找到文件后立即退出循环
+          else
+            echo "File not found: $FILE_URL"
           fi
         done
-        if [ ! -f "$FILE_URL" ]; then
-          echo "No file exists: $FILE_URL"
+        if [ "$FILE_FOUND" = false ]; then
+          echo "No file exists."
           echo "file_exists=false" >> $GITHUB_OUTPUT
         fi
+
 
     - name: Create ssr directory
       if: steps.check_file.outputs.file_exists == 'true'
