@@ -35,11 +35,11 @@ jobs:
             echo "File exists: $FILE_URL"
             echo "file_exists=true" >> $GITHUB_OUTPUT
             echo "file_extension=$ext" >> $GITHUB_OUTPUT
-            break
+            # break
           fi
         done
         if [ ! -f "$FILE_URL" ]; then
-          echo "No file exists."
+          echo "No file exists: $FILE_URL"
           echo "file_exists=false" >> $GITHUB_OUTPUT
         fi
 
