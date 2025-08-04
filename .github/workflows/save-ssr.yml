@@ -19,7 +19,10 @@ jobs:
         echo "Current date: $CURRENT_DATE"
         echo "Constructed URL: https://a.nodeshare.xyz/uploads/$YYYY/$M/$YYYYMMDD.json"
         echo "url=https://a.nodeshare.xyz/uploads/$YYYY/$M/$YYYYMMDD.json" >> $GITHUB_ENV
-    
+        
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
     - id: check_file
       name: Check if JSON file exists
       run: |
