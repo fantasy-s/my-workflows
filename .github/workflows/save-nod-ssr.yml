@@ -1,0 +1,46 @@
+name: Check and Save node-ssr Daily
+
+on:
+  schedule:
+    - cron: '0 12 * * *'  # 每天中午12点执行
+
+jobs:
+  check_file:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up date variables
+        id: vars
+        run: |
+          CURRENT_DATE=$(date +%Y-%m-%d)
+          YYYY=$(date +%Y)
+          M=$(date +%-m)  # 获取当前月份，去掉前导零
+          YYYYMMDD=$(date +%Y%m%d)
+          echo "Current date: $CURRENT_DATE"
+          echo "Constructed URL: https://a.nodeshare.xyz/uploads/$YYYY/$M/$YYYYMMDD.json"
+          echo "url=https://a.nodeshare.xyz/uploads/$YYYY/$M/$YYYYMMDD.json" >> $GITHUB_ENV
+      
+      - name: Check if JSON file exists
+        id: check_file
+        run: |
+          FILE_URL="${{ env.url }}"
+          RESPONSE=$(curl --write-out "%{http_code}" --silent --output /dev/null "$FILE_URL")
+          echo "HTTP Response: $RESPONSE"
+          if [ "$RESPONSE" -eq 200 ]; then
+            echo "File exists."
+            echo "::set-output name=file_exists::true"
+          else
+            echo "File does not exist."
+            echo "::set-output name=file_exists::false"
+          fi
+
+      - name: Download and save JSON file
+        if: steps.check_file.outputs.file_exists == 'true'
+        run: |
+          FILE_URL="${{ env.url }}"
+          curl -o "data_$(date +%Y%m%d).json" "$FILE_URL"
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git add "node_ssr.json"
+          git commit -m "Add JSON file from nodeshare for $(date +%Y%m%d)"
+          git push
