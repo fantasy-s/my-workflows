@@ -20,7 +20,8 @@ jobs:
         echo "Constructed URL: https://a.nodeshare.xyz/uploads/$YYYY/$M/$YYYYMMDD.json"
         echo "url=https://a.nodeshare.xyz/uploads/$YYYY/$M/$YYYYMMDD.json" >> $GITHUB_ENV
     
-    - name: Check if JSON file exists
+    - id: check_file
+      name: Check if JSON file exists
       run: |
         FILE_URL="${{ env.url }}"
         RESPONSE=$(curl --write-out "%{http_code}" --silent --output /dev/null "$FILE_URL")
