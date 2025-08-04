@@ -41,6 +41,6 @@ jobs:
           curl -o "data_$(date +%Y%m%d).json" "$FILE_URL"
           git config --global user.name "github-actions"
           git config --global user.email "actions@github.com"
-          git add "node_$(date +%Y%m%d).json"
+          git add "node_ssr.json"
           git commit -m "Add JSON file from nodeshare for $(date +%Y%m%d)"
           git push
