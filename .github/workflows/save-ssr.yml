@@ -43,16 +43,20 @@ jobs:
           echo "file_exists=false" >> $GITHUB_OUTPUT
         fi
 
+    - name: Create ssr directory
+      if: steps.check_file.outputs.file_exists == 'true'
+      run: |
+        mkdir -p ssr
+
     - name: Download file
       if: steps.check_file.outputs.file_exists == 'true'
       run: |
         FILE_URL="${{ env.url }}.${{ steps.check_file.outputs.file_extension }}"
-        EXT="${{ steps.check_file.outputs.file_extension }}"
-        curl -o "node_ssr_singbox.json" "$FILE_URL"
-        curl -o "node_ssr_clash.yaml" "$FILE_URL"
-        curl -o "node_ssr_v2ray.txt" "$FILE_URL"
+        curl -o "ssr/node_ssr_singbox.json" "$FILE_URL"
+        curl -o "ssr/node_ssr_clash.yaml" "$FILE_URL"
+        curl -o "ssr/node_ssr_v2ray.txt" "$FILE_URL"
         git config --global user.name "github-actions"
         git config --global user.email "actions@github.com"
-        git add "node_ssr_singbox.json" "node_ssr_clash.yaml" "node_ssr_v2ray.txt"
-        git commit -m "Add file from nodeshare for $(date +%Y%m%d)"
+        git add ssr/
+        git commit -m "Add nodeshare files to ssr directory for $(date +%Y%m%d)"
         git push
