@@ -22,20 +22,20 @@ jobs:
     
     - name: Check if JSON file exists
       run: |
-        FILE_URL = ${{ env.url }}
+        FILE_URL="${{ env.url }}"
         RESPONSE=$(curl --write-out "%{http_code}" --silent --output /dev/null "$FILE_URL")
         echo "HTTP Response: $RESPONSE"
         if [ "$RESPONSE" -eq 200 ]; then
           echo "File exists."
-          echo "::set-output name=file_exists::true"
+          echo "file_exists=true" >> $GITHUB_OUTPUT
         else
           echo "File does not exist."
-          echo "::set-output name=file_exists::false"
+          echo "file_exists=false" >> $GITHUB_OUTPUT
         fi
     - name: Download JSON file
       if: steps.check_file.outputs.file_exists == 'true'
       run: |
-        FILE_URL = ${{ env.url }}
+        FILE_URL=${{ env.url }}
         curl -o "node_ssr.json" $FILE_URL
         git config --global user.name "github-actions"
         git config --global user.email "actions@github.com"
