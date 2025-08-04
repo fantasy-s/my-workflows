@@ -49,6 +49,14 @@ jobs:
           echo "existing_files=$EXISTING_FILES" >> $GITHUB_OUTPUT
         fi
 
+    - name: Remove existing ssr directory
+      if: steps.check_file.outputs.file_exists == 'true'
+      run: |
+        if [ -d "ssr" ]; then
+          rm -rf ssr
+          echo "Removed existing ssr directory"
+        fi
+
     - name: Create ssr directory
       if: steps.check_file.outputs.file_exists == 'true'
       run: |
